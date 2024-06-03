@@ -125,22 +125,34 @@ export const calPageBoxScale = function (document, page) {
     return box;
 }
 
-
+// 根据模板来渲染层节点
+const renderLayerFromTemplate = function (tpls, template, pageDiv, fontResObj, drawParamResObj, multiMediaResObj) {
+    let array = [];
+    const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+    array = array.concat(layers);
+    for (let layer of array) {
+        if (layer) {
+            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+        }
+    }
+}
 
 export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
     const pageId = Object.keys(page)[0];
     const template = page[pageId]['json']['ofd:Template'];
-    if (template) {
-        let array = [];
-        const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-        array = array.concat(layers);
-        for (let layer of array) {
-            if (layer) {
-                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+    // 当使用多个模板时
+    if (Array.isArray(template)) {
+        template.forEach(item => {
+            if (item) {
+                renderLayerFromTemplate(tpls, item, pageDiv, fontResObj, drawParamResObj, multiMediaResObj);
             }
-        }
+        });
     }
-  
+    // 当使用单个模板时
+    if (Object.prototype.toString.call(template) === '[object Object]') {
+        renderLayerFromTemplate(tpls, template, pageDiv, fontResObj, drawParamResObj, multiMediaResObj);
+    }
+
     const contentLayers = page[pageId]?.json?.['ofd:Content']?.['ofd:Layer'];
     let array = [];
     array = array.concat(contentLayers);
