@@ -125,22 +125,38 @@ export const calPageBoxScale = function (document, page) {
     return box;
 }
 
-
+// 根据模板来渲染层节点
+const renderLayerFromTemplate = function (tpls, template, pageDiv, fontResObj, drawParamResObj, multiMediaResObj) {
+    let array = [];
+    const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
+    array = array.concat(layers);
+    for (let layer of array) {
+        if (layer) {
+            renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+        }
+    }
+}
 
 export const renderPage = function (pageDiv, page, tpls, fontResObj, drawParamResObj, multiMediaResObj) {
     const pageId = Object.keys(page)[0];
     const template = page[pageId]['json']['ofd:Template'];
-    if (template) {
-        let array = [];
-        const layers = tpls[template['@_TemplateID']]['json']['ofd:Content']['ofd:Layer'];
-        array = array.concat(layers);
-        for (let layer of array) {
-            if (layer) {
-                renderLayer(pageDiv, fontResObj, drawParamResObj, multiMediaResObj, layer, false);
+    if (Array.isArray(template)) { // 当使用多个模板时
+        template.forEach(item => {
+            /**
+             * 此处只满足 ZOrder 相同的情况
+             * 若 ZOrder 不同，可能需要根据 ZOrder 排序来渲染
+             * 参考 http://www.dajs.gov.cn/attach/0/88a7620d9d3f4e13b2baa52ab3487854.pdf 第 18 页 ZOrder 的属性说明
+             */
+            if (item) {
+                renderLayerFromTemplate(tpls, item, pageDiv, fontResObj, drawParamResObj, multiMediaResObj);
             }
-        }
+        });
+    } else if (template) { // 当使用单个模板时
+        renderLayerFromTemplate(tpls, template, pageDiv, fontResObj, drawParamResObj, multiMediaResObj);
+    } else {
+        console.error('ofd:Template not found!');
     }
-  
+
     const contentLayers = page[pageId]?.json?.['ofd:Content']?.['ofd:Layer'];
     let array = [];
     array = array.concat(contentLayers);
